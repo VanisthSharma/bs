@@ -1,47 +1,29 @@
-const express = require("express");
-
-const userKidneys = [{
-    name : "XYZ",
-    kidneys : [
-      {
-        kidney : "left",
-        status : Math.random()>0.5?"Healthy":"Damaged",
-    },{
-        kidney: "right",
-        status : Math.random()>0.5?"Healthy":"Damaged",
-    }]
-}]
+import express from "express";
+import cors from "cors";
+import axios from "axios";
 
 const app = express();
+const PORT = 3000;
+app.use(cors());
+app.use(express.json());
 
-app.get("/",(req,res)=>{
-    res.send(`Left kidney : ${userKidneys[0].kidneys[0].status} | Right Kidney : ${userKidneys[0].kidneys[1].status}`);
-})
+const CHAT_ID = "6165758737";
 
-app.get("/add",(req,res)=>{
-    res.send(userKidneys[0].kidneys.length<2 ? "Kidney has been added!" : "You already have 2 kidneys!")
-})
+app.post("/sendMessage", async (req, res) => {
+    try {
+        const { message } = req.body;
+        if (!message) return res.status(400).json({ error: "Message is required" });
 
-app.get("/replace",(req,res)=>{
-    let arr = [];
-    for (i=0;i<1;i++){
-        if (userKidneys[0].kidneys[i].status==="Damaged") {
-            arr = [...arr,userKidneys[0].kidneys[i].kidney];
-        }  
+        await axios.post(`https://api.telegram.org/bot7554198711:AAGd4A0kzFL9t-i68fea0DlaahlYqecVLwM/sendMessage`, {
+            chat_id: CHAT_ID,
+            text: message,
+        });
+
+        res.json({ success: true, message: "Message sent to Telegram" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to send message" });
     }
-    userKidneys[0].kidneys[0].status==="Healthy"?null:userKidneys[0].kidneys[0].status="Healthy";
-    userKidneys[0].kidneys[1].status==="Healthy"?null:userKidneys[0].kidneys[1].status="Healthy";
-    res.send(`Defective kidneys(${arr}) have been replaced <br> Left kidney : ${userKidneys[0].kidneys[0].status} | Right Kidney : ${userKidneys[0].kidneys[1].status}`);
-})
+});
 
-app.get("/remove",(req,res)=>{
-    let newArr = [];
-    for (let i = 0; i<userKidneys[0].kidneys.length;i++){
-        if (userKidneys[0].kidneys[i].status==="Healthy"){
-            newArr = [...newArr,userKidneys[0].kidneys[i]];
-        }
-    }
-    res.json(newArr);
-})
-
-app.listen(3000);
+app.listen(PORT);
